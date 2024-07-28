@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ user.username }}'s Profile - LuNa</title>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='Luna-icon.png') }}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .gradient-bg {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+        .post-card {
+            transition: transform 0.3s ease;
+        }
+        .post-card:hover {
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Navigation Bar -->
+    <nav class="gradient-bg p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="/" class="text-white text-2xl font-bold flex items-center">
+                <i class="fas fa-globe mr-2"></i>
+                LuNa
+            </a>
+            <button id="menu-toggle" class="text-white text-2xl md:hidden">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div id="menu" class="hidden md:flex space-x-4">
+                <a href="/" class="text-white hover:text-gray-200 transition duration-300"><i class="fas fa-home mr-1"></i> Home</a>
+                <a href="/profile/{{ current_user.username }}" class="text-white hover:text-gray-200 transition duration-300"><i class="fas fa-user mr-1"></i> Profile</a>
+                <a href="/messages" class="text-white hover:text-gray-200 transition duration-300"><i class="fas fa-envelope mr-1"></i> Messages</a>
+                <a href="/notifications" class="text-white hover:text-gray-200 transition duration-300"><i class="fa-solid fa-bell"></i> Notifications</a>
+                <a href="/logout" class="text-white hover:text-gray-200 transition duration-300"><i class="fas fa-sign-out-alt mr-1"></i> Logout</a>
+            </div>
+        </div>
+        <div id="dropdown-menu" class="md:hidden hidden bg-gray-800 text-white absolute w-full mt-2 rounded-lg shadow-lg">
+            <a href="/" class="block px-4 py-2 hover:bg-gray-700 transition duration-300"><i class="fas fa-home mr-1"></i> Home</a>
+            <a href="/profile/{{ current_user.username }}" class="block px-4 py-2 hover:bg-gray-700 transition duration-300"><i class="fas fa-user mr-1"></i> Profile</a>
+            <a href="/messages" class="block px-4 py-2 hover:bg-gray-700 transition duration-300"><i class="fas fa-envelope mr-1"></i> Messages</a>
+            <a href="/notifications" class="block px-4 py-2 hover:bg-gray-700 transition duration-300"><i class="fa-solid fa-bell"></i> Notifications</a>
+            <a href="/logout" class="block px-4 py-2 hover:bg-gray-700 transition duration-300"><i class="fas fa-sign-out-alt mr-1"></i> Logout</a>
+        </div>
+    </nav>
+
+    <script>
+        // JavaScript to toggle the menu
+        document.getElementById('menu-toggle').addEventListener('click', function() {
+            var dropdownMenu = document.getElementById('dropdown-menu');
+            dropdownMenu.classList.toggle('hidden');
+        });
+    </script>
+
+    <main class="container mx-auto mt-8 px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-lg shadow-md p-6 sm:p-8 md:p-10 lg:p-12">
+            <!-- User Info Section -->
+            <div class="flex flex-col md:flex-row items-center mb-6">
+                {% for user in available_users %}
+                <div class="user-profile">
+                    {% if user.profile_picture != 'default_profile_picture.png' %}
+                        <img src="{{ url_for('static', filename='uploads/' + user.profile_picture) }}" alt="{{ user.username }}'s profile picture" class="w-32 h-32 rounded-full mr-6 mb-4 md:mb-0">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='uploads/default.jpg') }}" alt="Default profile picture" class="w-32 h-32 rounded-full mr-6 mb-4 md:mb-0">
+                    {% endif %}
+                    <p>{{ user.username }}</p>
+                </div>
+            {% endfor %}
+            
+            
+                <div class="text-center md:text-left">
+                    <h1 class="text-3xl font-bold">{{ user.username }}</h1>
+                    <p class="text-gray-600">{{ user.email }}</p>
+                    <p class="text-sm text-gray-500">
+                        <i class="fas fa-calendar-alt mr-1"></i>
+                        Joined {{ user.date_joined.strftime('%B %Y') if user.date_joined else 'Date not available' }}
+                    </p>
+
+                    {% if current_user.id == user.id %}
+                    {% elif not current_user.is_following(user) %}
+                    <form action="{{ url_for('follow', username=user['username']) }}" method="POST" class="inline">
+                        <button type="submit" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-300">Follow</button>
+                    </form>
+                {% else %}
+                   
+                
+                        <form action="{{ url_for('unfollow', username=user['username']) }}" method="POST" class="inline">
+                            <button type="submit" class="mt-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition duration-300">Unfollow</button>
+                        </form>
+                    {% endif %}
+                    
+                </div>
+            </div>
+
+            <!-- Bio Section -->
+            <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                <h2 class="text-xl font-semibold mb-2">About</h2>
+                <p class="text-gray-700">{{ user.bio }}</p>
+            </div>
+
+            <!-- Stats Section -->
+            <div class="flex flex-wrap justify-between mb-6">
+                <div class="w-full sm:w-1/3 text-center p-4 bg-blue-100 rounded-lg m-2">
+                    <span class="text-3xl font-bold text-blue-600">{{ posts_count }}</span>
+                    <p class="text-gray-600">Posts</p>
+                </div>
+                <div class="w-full sm:w-1/3 text-center p-4 bg-green-100 rounded-lg m-2">
+                    <span class="text-3xl font-bold text-green-600">{{ followers_count }}</span>
+                    <p class="text-gray-600">
+                        {% if followers_count == 1 %}
+                            1 follower
+                        {% else %}
+                            {{ followers_count }} followers
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="w-full sm:w-1/3 text-center p-4 bg-purple-100 rounded-lg m-2">
+                    <span class="text-3xl font-bold text-purple-600">{{ following_count }}</span>
+                    <p class="text-gray-600">Following</p>
+                </div>
+            </div>
+
+            <!-- Activity Chart -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold mb-4">Activity Overview</h2>
+                <canvas id="activityChart" width="400" height="200"></canvas>
+            </div>
+
+            <!-- Posts Section -->
+            <h2 class="text-2xl font-bold mb-4">Recent Posts</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for post in posts %}
+                    <div class="bg-white p-4 rounded-lg shadow post-card">
+                        <div class="flex items-center mb-2">
+                            {% if user.profile_picture %}
+                                <img src="{{ url_for('static', filename='uploads/' + user.profile_picture) }}" alt="{{ user.username }}" class="w-10 h-10 rounded-full mr-2">
+                            {% else %}
+                                <img src="{{ url_for('static', filename='default_profile_picture.png') }}" alt="Default profile picture" class="w-10 h-10 rounded-full mr-2">
+                            {% endif %}
+                            <div>
+                                <p class="font-semibold">{{ user.username }}</p>
+                                <p class="text-gray-500 text-sm">{{ post.timestamp.strftime('%Y-%m-%d %H:%M') }}</p>
+                            </div>
+                        </div>
+                        <p class="mb-2">{{ post.content }}</p>
+                        {% if post.media_url %}
+                            <img src="{{ url_for('static', filename=post.media_url) }}" alt="Post media" class="w-full rounded-lg mb-2">
+                        {% endif %}
+                        <div class="flex items-center text-gray-500 text-sm">
+                            <button class="mr-4 hover:text-blue-500 transition duration-300"><i class="far fa-heart mr-1"></i> Like</button>
+                            <button class="mr-4 hover:text-blue-500 transition duration-300"><i class="far fa-comment mr-1"></i> Comment</button>
+                            <button class="hover:text-blue-500 transition duration-300"><i class="far fa-share-square mr-1"></i> Share</button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-200 p-4 mt-8">
+        <div class="container mx-auto text-center text-gray-600">
+            &copy; 2024 LuNa SocialApp. All rights reserved.
+        </div>
+    </footer>
+
+    <script>
+        // Add hover effect to nav links
+        document.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('mouseenter', function() {
+                anime({
+                    targets: this,
+                    translateY: -3,
+                    duration: 200,
+                    easing: 'easeOutQuad'
+                });
+            });
+            link.addEventListener('mouseleave', function() {
+                anime({
+                    targets: this,
+                    translateY: 0,
+                    duration: 200,
+                    easing: 'easeOutQuad'
+                });
+            });
+        });
+
+        // Activity Chart
+        const ctx = document.getElementById('activityChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Posts',
+                    data: [12, 19, 3, 5, 2, 3],
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

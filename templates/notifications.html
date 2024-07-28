@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - LuNa</title>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='Luna-icon.png') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+<style>
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    .gradient-bg {
+        background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+        background-size: 400% 400%;
+        animation: gradientBG 15s ease infinite;
+    }
+    .like-button i {
+        transition: color 0.3s ease, transform 0.3s ease;
+        color: gray;
+    }
+    .like-button:hover i {
+        transform: scale(1.2);
+    }
+    .like-button.liked i {
+        color: #e73c7e;
+    }
+    .post-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .post-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+</style>
+<body class="bg-gray-100">
+    <nav class="gradient-bg p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="/" class="text-white text-2xl font-bold flex items-center">
+                <i class="fas fa-globe mr-2"></i>
+                LuNa
+            </a>
+            <button id="menu-toggle" class="text-white text-2xl md:hidden">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div id="menu" class="hidden md:flex space-x-4">
+                <a href="/" class="text-white hover:text-gray-200 transition duration-300"><i class="fas fa-home mr-1"></i> Home</a>
+                <a href="/profile/{{ current_user.username }}" class="text-white hover:text-gray-200 transition duration-300"><i class="fas fa-user mr-1"></i> Profile</a>
+                <a href="/messages" class="text-white hover:text-gray-200 transition duration-300"><i class="fas fa-envelope mr-1"></i> Messages</a>
+                <a href="/notifications" class="text-white hover:text-gray-200 transition duration-300"><i class="fa-solid fa-bell"></i> Notifications</a>
+                <a href="/logout" class="text-white hover:text-gray-200 transition duration-300"><i class="fas fa-sign-out-alt mr-1"></i> Logout</a>
+            </div>
+        </div>
+        <div id="dropdown-menu" class="md:hidden hidden bg-gray-800 text-white absolute w-full mt-2 rounded-lg shadow-lg">
+            <a href="/" class="block px-4 py-2 hover:bg-gray-700 transition duration-300"><i class="fas fa-home mr-1"></i> Home</a>
+            <a href="/profile/{{ current_user.username }}" class="block px-4 py-2 hover:bg-gray-700 transition duration-300"><i class="fas fa-user mr-1"></i> Profile</a>
+            <a href="/messages" class="block px-4 py-2 hover:bg-gray-700 transition duration-300"><i class="fas fa-envelope mr-1"></i> Messages</a>
+            <a href="/notifications" class="block px-4 py-2 hover:bg-gray-700 transition duration-300"><i class="fa-solid fa-bell"></i> Notifications</a>
+            <a href="/logout" class="block px-4 py-2 hover:bg-gray-700 transition duration-300"><i class="fas fa-sign-out-alt mr-1"></i> Logout</a>
+        </div>
+    </nav>
+
+    <script>
+        // JavaScript to toggle the menu
+        document.getElementById('menu-toggle').addEventListener('click', function() {
+            var dropdownMenu = document.getElementById('dropdown-menu');
+            dropdownMenu.classList.toggle('hidden');
+        });
+    </script>
+
+    <main class="container mx-auto mt-8">
+        <div class="bg-white rounded-lg shadow-md p-8">
+            <h1 class="text-2xl font-bold mb-6">Notifications</h1>
+            <div id="notifications-container" class="space-y-4">
+                {% for notification in notifications %}
+                    <div class="p-4 bg-gray-50 rounded-lg {% if not notification.read %}border-l-4 border-blue-500{% endif %}">
+                        <p>{{ notification.content }}</p>
+                        <p class="text-xs text-gray-500 mt-1">{{ notification.timestamp.strftime('%Y-%m-%d %H:%M') }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-4 mt-8">
+        <div class="container mx-auto text-center">
+            © 2024 LuNa. All rights reserved.
+        </div>
+    </footer>
+
+    <script>
+        const socket = io();
+        const notificationsContainer = document.getElementById('notifications-container');
+
+        socket.on('new_notification', (data) => {
+            const notificationDiv = document.createElement('div');
+            notificationDiv.className = 'p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500';
+            notificationDiv.innerHTML = `
+                <p>${data.content}</p>
+                <p class="text-xs text-gray-500 mt-1">${new Date().toLocaleString()}</p>
+            `;
+            notificationsContainer.insertBefore(notificationDiv, notificationsContainer.firstChild);
+        });
+    </script>
+</body>
+</html>

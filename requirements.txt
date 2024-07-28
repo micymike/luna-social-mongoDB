@@ -1,0 +1,14 @@
+Flask
+Flask-SQLAlchemy
+Flask-Migrate
+Flask-Login
+Flask-SocketIO
+python-dotenv
+google-generativeai
+SQLAlchemy
+nltk
+Werkzeug
+gunicorn
+emojis
+SocketIO
+pytz

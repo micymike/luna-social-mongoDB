@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luna-Messages</title>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='Luna-icon.png') }}">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .gradient-bg {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+       /* Chat Bubble Container */
+.chat-bubble {
+    max-width: 70%;
+    word-wrap: break-word;
+    margin-bottom: 8px;
+    line-height: 1.4;
+    padding: 12px 20px;
+    border-radius: 16px;
+    display: inline-block;
+    position: relative;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.chat-bubble:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* Left Bubble */
+.chat-bubble.left {
+    background: #f0f0f0;
+    color: #333;
+    align-self: flex-start;
+}
+
+.chat-bubble.left::after {
+    content: "";
+    position: absolute;
+    border-style: solid;
+    border-width: 8px 8px 0;
+    border-color: #f0f0f0 transparent;
+    top: 50%;
+    transform: translateY(-50%);
+    left: -16px;
+    border-color: #f0f0f0 transparent;
+}
+
+/* Right Bubble */
+.chat-bubble.right {
+    background: #3b82f6;
+    color: #ffffff;
+    align-self: flex-end;
+}
+
+.chat-bubble.right::after {
+    content: "";
+    position: absolute;
+    border-style: solid;
+    border-width: 8px 8px 0;
+    border-color: #3b82f6 transparent;
+    top: 50%;
+    transform: translateY(-50%);
+    right: -16px;
+    border-color: #3b82f6 transparent;
+}
+
+        .message-input {
+            border: none;
+            border-radius: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            height: 40px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+        .send-button {
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #3b82f6;
+            color: white;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+        .send-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.5);
+        }
+        .conversation-starter {
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .conversation-starter:hover {
+            background-color: #e0e0e0;
+        }
+        .message-timestamp {
+            display: block;
+            font-size: 12px;
+            color: gray;
+            margin-top: 4px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex-grow min-h-screen">
+    <nav class="gradient-bg p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="/" class="text-white text-2xl font-bold flex items-center">
+                <i class="fas fa-globe mr-2"></i>
+                LuNa
+            </a>
+            <button id="menu-toggle" class="text-white text-2xl md:hidden">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div id="menu" class="hidden md:flex space-x-4">
+                <a href="/" class="text-white hover:text-gray-200 transition duration-300"><i class="fas fa-home mr-1"></i> Home</a>
+                <a href="/profile/{{ current_user.username }}" class="text-white hover:text-gray-200 transition duration-300"><i class="fas fa-user mr-1"></i> Profile</a>
+                <a href="/messages" class="text-white hover:text-gray-200 transition duration-300"><i class="fas fa-envelope mr-1"></i> Messages</a>
+                <a href="/notifications" class="text-white hover:text-gray-200 transition duration-300"><i class="fa-solid fa-bell"></i> Notifications</a>
+                <a href="/logout" class="text-white hover:text-gray-200 transition duration-300"><i class="fas fa-sign-out-alt mr-1"></i> Logout</a>
+            </div>
+        </div>
+        <div id="dropdown-menu" class="md:hidden hidden bg-gray-800 text-white absolute w-full mt-2 rounded-lg shadow-lg">
+            <a href="/" class="block px-4 py-2 hover:bg-gray-700 transition duration-300"><i class="fas fa-home mr-1"></i> Home</a>
+            <a href="/profile/{{ current_user.username }}" class="block px-4 py-2 hover:bg-gray-700 transition duration-300"><i class="fas fa-user mr-1"></i> Profile</a>
+            <a href="/messages" class="block px-4 py-2 hover:bg-gray-700 transition duration-300"><i class="fas fa-envelope mr-1"></i> Messages</a>
+            <a href="/notifications" class="block px-4 py-2 hover:bg-gray-700 transition duration-300"><i class="fa-solid fa-bell"></i> Notifications</a>
+            <a href="/logout" class="block px-4 py-2 hover:bg-gray-700 transition duration-300"><i class="fas fa-sign-out-alt mr-1"></i> Logout</a>
+        </div>
+    </nav>
+    <div class="container mx-auto py-8">
+        <div class="flex flex-col md:flex-row">
+            <!-- User List -->
+            <div class="w-full md:w-1/4 bg-white p-4 rounded-lg shadow mb-4 md:mb-0">
+                <h2 class="text-lg font-bold mb-4">Users</h2>
+                <ul>
+                    {% for user in available_users %}
+                        <li>
+                            <a href="{{ url_for('messages', recipient_id=user.id) }}" class="flex items-center p-2 rounded-lg hover:bg-gray-200">
+                                <img src="{{ url_for('static', filename='uploads/' + user.profile_picture) }}" alt="{{ user.username }}" class="w-12 h-12 rounded-full">
+                                <span class="ml-3">{{ user.username }}</span>
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Chat Area -->
+            <div class="w-full md:w-3/4 bg-white p-4 rounded-lg shadow ml-0 md:ml-4 flex flex-col">
+                {% if recipient %}
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold">Chatting with {{ recipient.username }}</h2>
+                        <button id="clear-chat-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out">
+                            <i class="fas fa-trash-alt mr-2"></i> Clear Chat
+                        </button>
+                    </div>
+
+                    <!-- Messages -->
+                    <div id="messages" class="flex-1 overflow-y-auto mb-4 p-4">
+                        {% for message, sender in messages %}
+                            <div class="flex items-start mb-4 {{ 'justify-end' if message.sender_id == current_user.id else '' }}">
+                                {% if message.sender_id != current_user.id %}
+                                    <img src="{{ sender.profile_picture }}" alt="{{ sender.username }}" class="w-8 h-8 rounded-full mr-2">
+                                {% endif %}
+                                <div class="{{ 'ml-2' if message.sender_id != current_user.id else 'mr-2' }}">
+                                    <div class="chat-bubble {{ 'right' if message.sender_id == current_user.id else 'left' }}">
+                                        <p>{{ message.content }}</p>
+                                        {% if message.media_url %}
+                                            <img src="{{ message.media_url }}" alt="Media" class="mt-2 rounded-lg max-w-full">
+                                        {% endif %}
+                                    </div>
+                                    <span class="message-timestamp">{{ message.timestamp }}</span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- New Message Form -->
+                    <form id="message-form" action="{{ url_for('send_message_route', recipient_id=recipient.id) }}" method="post" enctype="multipart/form-data" class="flex items-center">
+                        <input type="text" name="content" placeholder="Type a message..." class="message-input flex-1 mr-2">
+                        <label for="media" class="cursor-pointer mr-2">
+                            <i class="fas fa-paperclip text-gray-500 text-xl"></i>
+                            <input type="file" name="media" id="media" class="hidden">
+                        </label>
+                        <button type="submit" class="send-button">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+
+                    <!-- AI Reply Button -->
+                    <button id="ai-reply-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded mt-4 transition duration-300 ease-in-out transform hover:scale-105">
+                        <i class="fas fa-robot mr-2"></i> AI Reply
+                    </button>
+
+                    <!-- Conversation Starters Button -->
+                    <button id="show-starters-btn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded mt-4 transition duration-300 ease-in-out transform hover:scale-105">
+                        <i class="fas fa-lightbulb mr-2"></i> Show Conversation Starters
+                    </button>
+
+                    <!-- Conversation Starters -->
+                    <div id="conversation-starters" class="mt-4 hidden bg-gray-100 p-4 rounded-lg">
+                        <h3 class="text-lg font-bold mb-2">Conversation Starters</h3>
+                        <ul class="list-none pl-0">
+                            {% for starter in starters %}
+                                <li class="conversation-starter mb-2 p-2 rounded-lg hover:bg-gray-200 transition duration-300 ease-in-out">{{ starter }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% else %}
+                    <p class="text-center text-gray-500">Select a user to start chatting.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <footer class="bg-gray-800 text-white py-4">
+        <div class="container mx-auto text-center">
+            © 2024 LuNa. All rights reserved.
+        </div>
+    </footer>
+    <!-- Add the Socket.IO client library -->
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <script>
+                // JavaScript to toggle the menu
+                document.getElementById('menu-toggle').addEventListener('click', function() {
+                    var dropdownMenu = document.getElementById('dropdown-menu');
+                    dropdownMenu.classList.toggle('hidden');
+                });
+        const socket = io();
+
+        // Show conversation starters on button click
+        document.getElementById('show-starters-btn').addEventListener('click', () => {
+            const startersDiv = document.getElementById('conversation-starters');
+            startersDiv.classList.toggle('hidden');
+        });
+
+        // Trigger AI reply
+        document.getElementById('ai-reply-btn').addEventListener('click', () => {
+            const content = document.querySelector('input[name="content"]').value;
+            fetch(`/generate_ai_reply/${content}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.reply) {
+                        // Populate the chat input area with the AI-generated message
+                        const messageInput = document.querySelector('input[name="content"]');
+                        messageInput.value = data.reply;
+                    } else {
+                        console.error('AI reply error:', data.error);
+                    }
+                });
+        });
+    
+        // Clear chat functionality
+        document.getElementById('clear-chat-btn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear the entire chat?')) {
+                fetch(`/delete_chat_history/{{ recipient.id }}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Include any necessary CSRF token here
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const messagesDiv = document.getElementById('messages');
+                        messagesDiv.innerHTML = '';
+                        alert('Chat history deleted successfully');
+                    } else {
+                        alert('Failed to delete chat history: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while deleting chat history');
+                });
+            }
+        });
+
+        // Make conversation starters clickable
+        document.querySelectorAll('.conversation-starter').forEach(starter => {
+            starter.addEventListener('click', () => {
+                const messageInput = document.querySelector('input[name="content"]');
+                messageInput.value = starter.textContent;
+                document.getElementById('message-form').submit();
+            });
+        });
+
+        socket.on('new_message', (message) => {
+            const messagesDiv = document.getElementById('messages');
+            const newMessageDiv = document.createElement('div');
+            newMessageDiv.classList.add('flex', 'items-start', 'mb-4', message.sender_id === '{{ current_user.id }}' ? 'justify-end' : '');
+
+            newMessageDiv.innerHTML = `
+                ${message.sender_id !== '{{ current_user.id }}' ? `<img src="${message.sender_profile_picture}" alt="${message.sender_username}" class="w-8 h-8 rounded-full mr-2">` : ''}
+                <div class="${message.sender_id === '{{ current_user.id }}' ? 'mr-2' : 'ml-2'}">
+                    <div class="chat-bubble ${message.sender_id === '{{ current_user.id }}' ? 'right' : 'left'}">
+                        <p>${message.content}</p>
+                        ${message.media_url ? `<img src="${message.media_url}" alt="Media" class="mt-2 rounded-lg max-w-full">` : ''}
+                    </div>
+                    <span class="message-timestamp">${message.timestamp}</span>
+                </div>
+            `;
+            messagesDiv.appendChild(newMessageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+    </script>
+</body>
+</html>
