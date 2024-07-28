@@ -63,7 +63,6 @@ def load_user(user_id):
     if user:
         return User(user)
     return None
-
 # Register blueprints
 app.register_blueprint(profile_blueprint)
 
@@ -161,15 +160,16 @@ def replace_usernames(text):
     return re.sub(r'@(\w+)', replace_username, text)
 
 @app.route('/profile/<username>')
+@login_required
 def user_profile(username):
     user = db.users.find_one({"username": username})
     if not user:
-        return redirect(url_for('index'))
+        return "User not found", 404
     posts = list(db.posts.find({"user_id": user['_id']}))
     followers_count = len(user.get('followers', []))
     following_count = len(user.get('following', []))
     posts_count = len(posts)
-
+    
     return render_template(
         'profile.html',
         user=user,
@@ -178,7 +178,6 @@ def user_profile(username):
         following_count=following_count,
         posts_count=posts_count
     )
-
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
 @login_required

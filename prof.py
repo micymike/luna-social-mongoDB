@@ -1,5 +1,5 @@
 from flask import Blueprint, abort, jsonify, render_template, request, redirect, url_for, flash
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user, logout_user
 from werkzeug.utils import secure_filename
 from pymongo import MongoClient
 from bson.objectid import ObjectId
@@ -31,27 +31,31 @@ def allowed_file(filename):
 @profile.route('/profile/<username>')
 @login_required
 def user_profile(username):
-    user = db.users.find_one({'username': username})
-    if not user:
-        abort(404)
+    if username == current_user.username:
+        user = current_user
+    else:
+        user = users_collection.find_one({"username": username})
     
-    posts = db.posts.find({'author_id': user['_id']})
-    posts_count = db.posts.count_documents({'author_id': user['_id']})
-    followers_count = db.users.count_documents({'followed': user['_id']})
-    following_count = len(user.get('followed', []))
+    if not user:
+        abort(404, description="User not found")
+    
+    posts = list(posts_collection.find({"user_id": user._id}))
+    followers_count = follows_collection.count_documents({"followed_id":  user._id})
+    following_count = follows_collection.count_documents({"follower_id":  user._id})
+    posts_count = len(posts)
     
     return render_template(
-        'profile.html', 
-        user=user, 
-        posts=posts, 
-        posts_count=posts_count,
+        'profile.html',
+        user=user,
+        posts=posts,
         followers_count=followers_count,
-        following_count=following_count
+        following_count=following_count,
+        posts_count=posts_count
     )
-
-
+    
+    
 @profile.route('/edit_profile', methods=['GET', 'POST'])
-@login_required
+
 def edit_profile():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -113,6 +117,25 @@ def unfollow(username):
     follows_collection.delete_one({'follower_id': current_user.id, 'followed_id': user['_id']})
     flash(f'You have unfollowed {username}.', 'success')
     return redirect(url_for('prof.user_profile', username=username))
+
+@profile.route('/delete_profile', methods=['GET', 'POST'])
+@login_required
+def delete_profile():
+    if request.method == 'POST':
+        # Delete user's posts
+        posts_collection.delete_many({'user_id': current_user.id})
+        
+        # Delete user's follows and followers
+        follows_collection.delete_many({'$or': [{'follower_id': current_user.id}, {'followed_id': current_user.id}]})
+        
+        # Delete user's account
+        users_collection.delete_one({'_id': current_user.id})
+        
+        logout_user()
+        flash('Your profile has been deleted.', 'success')
+        return redirect(url_for('index'))
+    
+    return render_template('register.html')
 
 @profile.route('/post/<post_id>/like', methods=['POST'])
 @login_required

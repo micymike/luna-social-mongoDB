@@ -15,7 +15,7 @@ def init_db(db):
 
 class User(UserMixin):
     def __init__(self, user_data):
-        self.id = str(user_data['_id'])
+        self.id = str(user_data['_id'])  # Convert ObjectId to string for Flask-Login
         self.username = user_data['username']
         self.email = user_data['email']
         self.password_hash = user_data['password_hash']
@@ -25,28 +25,32 @@ class User(UserMixin):
         self.followed = user_data.get('followed', [])
         self.followers = user_data.get('followers', [])
 
+    @property
+    def _id(self):
+        # This property allows you to access the MongoDB ObjectId using self._id
+        return ObjectId(self.id)
+
     def follow(self, user):
         if not self.is_following(user):
-            self.followed.append(ObjectId(user.id))
             global db
-            db.users.update_one({'_id': ObjectId(self.id)}, {'$push': {'followed': ObjectId(user.id)}})
-            db.users.update_one({'_id': ObjectId(user.id)}, {'$push': {'followers': ObjectId(self.id)}})
+            self.followed.append(user._id)  # Use the _id property of the user object
+            db.users.update_one({'_id': self._id}, {'$push': {'followed': user._id}})
+            db.users.update_one({'_id': user._id}, {'$push': {'followers': self._id}})
 
     def unfollow(self, user):
         if self.is_following(user):
-            self.followed.remove(ObjectId(user.id))
             global db
-            db.users.update_one({'_id': ObjectId(self.id)}, {'$pull': {'followed': ObjectId(user.id)}})
-            db.users.update_one({'_id': ObjectId(user.id)}, {'$pull': {'followers': ObjectId(self.id)}})\
-                
-    
+            self.followed.remove(user._id)  # Use the _id property of the user object
+            db.users.update_one({'_id': self._id}, {'$pull': {'followed': user._id}})
+            db.users.update_one({'_id': user._id}, {'$pull': {'followers': self._id}})
 
     def is_following(self, user):
-        if isinstance(user, dict):  # Check if user is a dictionary
-            user_id = user.get('_id')  # Access the MongoDB ObjectId using '_id'
+        if isinstance(user, User):
+            return user._id in self.followed  # Use the _id property of the user object
+        elif isinstance(user, dict):
+            return ObjectId(user.get('_id')) in self.followed
         else:
-            user_id = user.id  # Access the id attribute if user is a User instance
-        return ObjectId(user_id) in self.followed
+            raise ValueError("Invalid user type")
 
     def __repr__(self):
         return f'<User {self.username}>'
