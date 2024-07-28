@@ -7,7 +7,7 @@ WORKDIR /app
 COPY --chown=user ./requirements.txt requirements.txt
 
 RUN pip install -r requirements.txt
-
+RUN pip install --upgrade pymongo
 COPY --chown=user . /app
 
 CMD ["gunicorn", "app:app", "-b", "0.0.0.0:7680"]
