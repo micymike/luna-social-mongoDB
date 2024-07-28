@@ -18,7 +18,7 @@ model = genai.GenerativeModel('gemini-pro')
 
 # MongoDB client setup
 client = MongoClient(os.getenv('MONGO_URI'))
-db = client['your_database_name']
+db = client['mikemoses']
 users_collection = db['users']
 posts_collection = db['posts']
 follows_collection = db['follows']
