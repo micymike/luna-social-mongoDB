@@ -71,7 +71,7 @@
     <main class="flex-grow container mx-auto mt-4 px-4">
         <div class="flex flex-wrap justify-center gap-4 mb-8">
             {% for user in all_users %}
-                <a href="{{ url_for('user_profile', username=user.username) }}" class="flex flex-col items-center">
+                <a href="{{ url_for('prof.user_profile', username=current_user.username) }}" class="flex flex-col items-center">
                     {% if user.profile_picture %}
                         <img src="{{ url_for('static', filename='uploads/' + user.profile_picture) }}" alt="{{ user.username }}" class="w-12 h-12 rounded-full">
                     {% else %}
