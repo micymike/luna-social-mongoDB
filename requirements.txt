@@ -14,3 +14,4 @@ SocketIO
 pytz
 Flask-PyMongo
 pymongo
+bson
