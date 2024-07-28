@@ -26,7 +26,8 @@ app = Flask(__name__)
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 
-uri = "mongodb+srv://user_app:oBkAQrkJPemq8aiv@cluster0.bbyzci5.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+uri = "mongodb+srv://mikemoses:mikemoses@cluster0.jvbhvc3.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+
 
 # Create a new client and connect to the server
 client = MongoClient(uri, server_api=ServerApi('1'))
